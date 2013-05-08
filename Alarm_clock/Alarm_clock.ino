@@ -20,7 +20,7 @@ void setup() {
   Wire.beginTransmission(0x51);
   Wire.write(0x02);
   Wire.write(0x00);
-  Wire.write(B00010000);
+  Wire.write(B00100000);
   Wire.write(B00000100);
   Wire.endTransmission();
 }
@@ -42,13 +42,13 @@ void loop() {
   };
   //format the time correctly by picking apart register contents
   //Minute 0
-  time_formatted[0]=(B00010000) | (time_raw[0]&B00001111);
+  time_formatted[0]=(B10000000) | (time_raw[0]&B00001111);
   //Minute 1
-  time_formatted[1]=(B00100000) | (time_raw[0]&B01110000);
+  time_formatted[1]=(B01000000) | ((time_raw[0]&B01110000)>>4);
   //Hour 0
-  time_formatted[2]=(B01000000) | (time_raw[1]&B00001111);
+  time_formatted[2]=(B00100000) | (time_raw[1]&B00001111);
   //Hour 1
-  time_formatted[3]=(B10000000) | (time_raw[1]&B00110000);
+  time_formatted[3]=(B00010000) | ((time_raw[1]&B00110000)>>4);
   
   for(int i=0;i<10;i++) {
     for(int displaySelect=0;displaySelect<4;displaySelect++) {
