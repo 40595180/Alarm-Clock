@@ -26,7 +26,7 @@ void setup() {
 }
 
 void loop() {
-  byte time_raw[3];
+  byte time_raw[2];
   //each byte contains a ready to send code
   byte time_formatted[4];
   //set to timer registers
@@ -38,24 +38,24 @@ void loop() {
   int index = 0;
   while(Wire.available()) {
     time_raw[index]=Wire.read();
-    index++
+    index++;
   };
-  time_formatted[0]=(B00010000)&(time_raw[0]&B00001111);
-  for (byte displayNumber=0;displayNumber<10;displayNumber++) {
-    for(int i=0;i<100;i++) {
-      for(byte displaySelect=0;displaySelect<4;displaySelect++) {
-        byte output=1;
-        output = output << displaySelect+4;
-        //Serial.println("outputShifted");
-        //Serial.println(output,BIN);
-        output = output | displayNumber;
-        digitalWrite(latchPin, LOW);
-        shiftOut(dataPin, clockPin, MSBFIRST, output);
-        digitalWrite(latchPin,HIGH);
-        //Serial.println("final output");
-        //Serial.println(output, BIN);
-        delay(4);
-      };
+  //format the time correctly by picking apart register contents
+  //Minute 0
+  time_formatted[0]=(B00010000) | (time_raw[0]&B00001111);
+  //Minute 1
+  time_formatted[1]=(B00100000) | (time_raw[0]&B01110000);
+  //Hour 0
+  time_formatted[2]=(B01000000) | (time_raw[1]&B00001111);
+  //Hour 1
+  time_formatted[3]=(B10000000) | (time_raw[1]&B00110000);
+  
+  for(int i=0;i<10;i++) {
+    for(int displaySelect=0;displaySelect<4;displaySelect++) {
+      digitalWrite(latchPin, LOW);
+      shiftOut(dataPin, clockPin, MSBFIRST, time_formatted[displaySelect]);
+      digitalWrite(latchPin,HIGH);
+      delay(4);
     };
   };
 }
