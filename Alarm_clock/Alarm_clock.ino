@@ -18,7 +18,6 @@ void setup() {
   Wire.write(0x0D);
   Wire.write(B10000011);
   Wire.endTransmission();
-  //set the time to 4:20. Cuz SMOWK WEID ERRY DAY
   //also for debugging
   Wire.beginTransmission(0x51);
   Wire.write(0x02);
@@ -26,6 +25,18 @@ void setup() {
   Wire.write(B00100000);
   Wire.write(B00000100);
   Wire.endTransmission();
+  
+  //set up timer and interrupts
+  noInterrupts();
+  TCCR1A=0;
+  TCCR1A=0;
+  TCNT1=0;
+  
+  OCR1A=250; //16MHz/256 prescaler/250Hz (.004 s period);
+  TCCR1B |= (1<<WGM12); //CTC
+  TCCR1B |= (1<<CS12); //256 prescaler
+  TIMSK1 |= (1<<OCIE1A); //enable timer compare interrupt
+  interrupts();
 }
 
 void loop() {
