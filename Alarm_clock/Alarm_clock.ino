@@ -56,25 +56,36 @@ void setup() {
   
   //set up timer and interrupts
   noInterrupts();
+  //this timer will control the periodic display updates
   TCCR1A=0;
-  TCCR1A=0;
+  TCCR1B=0;
   TCNT1=0;
   
   OCR1A=250; //16MHz/256 prescaler/250Hz (.004 s period);
   TCCR1B |= (1<<WGM12); //set to CTC with OCR1A max
   TCCR1B |= (1<<CS12); //256 prescaler
   TIMSK1 |= (1<<OCIE1A); //enable timer compare interrupt
+  
+  //this timer will control periodic time polling
+  TCCR2A=0;
+  TCCR2B=0;
+  
+  OCR2A=625; //16MHz/256 prescaler/100Hz (.01 s period)
+  TCCR2A |= (1<<WGM01); //set to CTC mode
+  TCCR2B |= (1<<CS22) & (1<<CS21); //set to 256 prescaler
+  TIMSK2 |= (1<<OCIE2A);
   interrupts();
 }
 
 ISR(TIMER1_COMPA_vect) {
   digitalWrite(latchPin, LOW);
-  shiftOut(dataPin, clockPin, MSBFIRST, time_formatted[(currentDigit++)%4]);
+  shiftOut(dataPin, clockPin, MSBFIRST, time_formatted[currentDigit++]);
+  if(currentDigit==4)currentDigit=0;
   digitalWrite(latchPin,HIGH);
 };
 
-void loop() {
-  //each byte contains a ready to send code
+ISR(TIMER2_COMPA_vect) {
+    //each byte contains a ready to send code
   //set address to timer registers
   Wire.beginTransmission(0x51);
   Wire.write(0x03);
@@ -97,6 +108,10 @@ void loop() {
   time_formatted[2]=(B00100000) | (time_raw[1]&B00001111);
   //Hour 1
   time_formatted[3]=(B00010000) | ((time_raw[1]&B00110000)>>4);
+};
+
+void loop() {
+
   //THIS HAS BEEN MOVED TO TIMER 1 CTC ISR
 //  for(int i=0;i<10;i++) {
 //    for(int displaySelect=0;displaySelect<4;displaySelect++) {
