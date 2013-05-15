@@ -10,6 +10,10 @@ byte time_raw[2]; //raw read from Real Time Clock
 byte time_formatted[4]; //high 4 bits contains digit to activate, low 4 bits contains number
 short unsigned int currentDigit=0; //current digit to display, it is incremented during the timer 1 ISR
 
+//testing
+unsigned int count1=0;
+unsigned int count2=0;
+
 void setup() {
   pinMode(latchPin,OUTPUT);
   pinMode(clockPin,OUTPUT);
@@ -26,7 +30,7 @@ void setup() {
   //also for debugging
   Wire.beginTransmission(0x51);
   Wire.write(0x02);
-  Wire.write(0x00);
+  Wire.write(B01010101);
   Wire.write(B00100000);
   Wire.write(B00000100);
   Wire.endTransmission();
@@ -69,23 +73,26 @@ void setup() {
   //this timer will control periodic time polling
   TCCR2A=0;
   TCCR2B=0;
+  TCNT2=0;
   
-  OCR2A=625; //16MHz/256 prescaler/100Hz (.01 s period)
-  TCCR2A |= (1<<WGM01); //set to CTC mode
-  TCCR2B |= (1<<CS22) & (1<<CS21); //set to 256 prescaler
+  OCR2A=6250; //16MHz/256 prescaler/10Hz (.1 s period)
+  TCCR2A |= 2; //set to CTC mode
+  TCCR2B |= (1<<CS22) | (1<<CS21); //set to 256 prescaler
   TIMSK2 |= (1<<OCIE2A);
   interrupts();
 }
 
 ISR(TIMER1_COMPA_vect) {
+  count1++;
   digitalWrite(latchPin, LOW);
   shiftOut(dataPin, clockPin, MSBFIRST, time_formatted[currentDigit++]);
   if(currentDigit==4)currentDigit=0;
   digitalWrite(latchPin,HIGH);
 };
 
-ISR(TIMER2_COMPA_vect) {
-    //each byte contains a ready to send code
+ISR(TIMER2_COMPA_vect, ISR_NOBLOCK) {
+  count2++;
+  //each byte contains a ready to send code
   //set address to timer registers
   Wire.beginTransmission(0x51);
   Wire.write(0x03);
@@ -111,7 +118,6 @@ ISR(TIMER2_COMPA_vect) {
 };
 
 void loop() {
-
   //THIS HAS BEEN MOVED TO TIMER 1 CTC ISR
 //  for(int i=0;i<10;i++) {
 //    for(int displaySelect=0;displaySelect<4;displaySelect++) {
