@@ -1,5 +1,9 @@
 #include <Wire.h>
 
+//rtc defines
+#define AIE 1
+#define TIE 0
+
 //pin definitions
 int latchPin=8;
 int clockPin=12;
@@ -24,17 +28,27 @@ void setup() {
   byte command=B11000011;
   Wire.begin();
   Wire.beginTransmission(0x51);
+  Wire.write(0x01);
+  //ennable alarm
+  Wire.write(1<<AIE);
+  Wire.endTransmission();
+  Wire.beginTransmission(0x51);
   Wire.write(0x0D);
   Wire.write(B10000011);
   Wire.endTransmission();
-  //also for debugging
+  //Set Time
   Wire.beginTransmission(0x51);
   Wire.write(0x02);
   Wire.write(B01010101);
   Wire.write(B00100000);
   Wire.write(B00000100);
   Wire.endTransmission();
-  
+  //set alarm
+  Wire.beginTransmission(0x51);
+  Wire.write(0x09);
+  Wire.write(B00100001);
+  Wire.write(B00000100);
+  Wire.endTransmission();
   //do initial read of Real Time Clock and registers
   Wire.beginTransmission(0x51);
   Wire.write(0x03);
