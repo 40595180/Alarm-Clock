@@ -8,6 +8,7 @@
 int latchPin=8;
 int clockPin=12;
 int dataPin=11;
+int alarmPin=4;
 
 //global bytes
 byte time_raw[2]; //raw read from Real Time Clock
@@ -18,10 +19,34 @@ short unsigned int currentDigit=0; //current digit to display, it is incremented
 unsigned int count1=0;
 unsigned int count2=0;
 
+
+void alarm() {
+  interrupts();
+  byte registercontents;
+  Wire.beginTransmission(0x51);
+  Wire.write(0x01);
+  Wire.endTransmission();
+  Wire.requestFrom(0x51,1);
+  while(Wire.available()) {
+      registercontents = Wire.read();
+  }
+  registercontents &= B11110111;
+  Wire.beginTransmission(0x51);
+  Wire.write(0x01);
+  Wire.write(registercontents);
+  Wire.endTransmission();
+
+  digitalWrite(alarmPin, HIGH);
+  delay(500);
+  digitalWrite(alarmPin, LOW);
+}
+
 void setup() {
   pinMode(latchPin,OUTPUT);
   pinMode(clockPin,OUTPUT);
   pinMode(dataPin, OUTPUT);
+  pinMode(alarmPin,OUTPUT);
+  attachInterrupt(0,alarm,FALLING);
   //for debugging purposes...
   Serial.begin(9600);
   //set clock pin output to 1hz
