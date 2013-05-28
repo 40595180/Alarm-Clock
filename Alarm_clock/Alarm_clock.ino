@@ -9,6 +9,8 @@ int latchPin=8;
 int clockPin=12;
 int dataPin=11;
 int alarmPin=4;
+int minutePin=2;
+int hourPin=5;
 
 //global bytes
 byte time_raw[2]; //raw read from Real Time Clock
@@ -46,6 +48,10 @@ void setup() {
   pinMode(clockPin,OUTPUT);
   pinMode(dataPin, OUTPUT);
   pinMode(alarmPin,OUTPUT);
+  //minute and hour setting things.
+  pinMode(minutePin,INPUT_PULLUP);
+  pinMode(hourPin,INPUT_PULLUP);
+  //this is attached to the INT pin on the rtc
   attachInterrupt(0,alarm,FALLING);
   //for debugging purposes...
   Serial.begin(9600);
@@ -156,14 +162,50 @@ ISR(TIMER2_COMPA_vect, ISR_NOBLOCK) {
   time_formatted[3]=(B00010000) | ((time_raw[1]&B00110000)>>4);
 };
 
+void incrementMinute() {
+  byte minute;
+  Wire.beginTransmission(0x51);
+  Wire.write(0x03);
+  Wire.endTransmission();
+  //get the minutes
+  Wire.requestFrom(0x51,1);
+  while(Wire.available()) {
+    minute=Wire.read();
+  };
+  byte minuteLower= minute & B00001111;
+  byte minuteUpper= (minute & B01110000)>>4;
+  byte totalMinute= (minuteUpper*10) + minuteLower;
+  totalMinute = (totalMinute + 1)%60;
+  minute = ((totalMinute/10)<<4)|(totalMinute%10);
+  Wire.beginTransmission(0x51);
+  Wire.write(0x03);
+  Wire.write(minute);
+  Wire.endTransmission();
+};
+
+void incrementHour() {
+  byte hour;
+  Wire.beginTransmission(0x51);
+  Wire.write(0x04);
+  Wire.endTransmission();
+  //get the hours
+  Wire.requestFrom(0x51,1);
+  while(Wire.available()) {
+    hour=Wire.read();
+  };
+  byte minuteLower= hour & B00001111;
+  byte minuteUpper= (hour & B00110000)>>4;
+  byte totalMinute= (minuteUpper*10) + minuteLower;
+  totalMinute = (totalMinute + 1)%12;
+  if(totalMinute==0) {totalMinute=12;};
+  hour = ((totalMinute/10)<<4)|(totalMinute%10);
+  Wire.beginTransmission(0x51);
+  Wire.write(0x04);
+  Wire.write(hour);
+  Wire.endTransmission();
+}
+
 void loop() {
-  //THIS HAS BEEN MOVED TO TIMER 1 CTC ISR
-//  for(int i=0;i<10;i++) {
-//    for(int displaySelect=0;displaySelect<4;displaySelect++) {
-//      digitalWrite(latchPin, LOW);
-//      shiftOut(dataPin, clockPin, MSBFIRST, time_formatted[displaySelect]);
-//      digitalWrite(latchPin,HIGH);
-//      delay(4);
-//    };
-//  };
+  if(!digitalRead(minutePin)) incrementMinute();
+  if(!digitalRead(hourPin)) incrementHour();
 }
