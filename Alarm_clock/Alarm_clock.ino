@@ -9,9 +9,7 @@ int latchPin=8;
 int clockPin=12;
 int dataPin=11;
 int alarmPin=4;
-<<<<<<< HEAD
 byte minute1, minute0, hour1, hour0;
-=======
 int minutePin=3;
 int hourPin=5;
 int snoozePin=6;
@@ -22,8 +20,8 @@ byte time_formatted[4]; //high 4 bits contains digit to activate, low 4 bits con
 short unsigned int currentDigit=0; //current digit to display, it is incremented during the timer 1 ISR
 
 //testing
-unsigned int count1=0;
-unsigned int count2=0;
+//unsigned int count1=0;
+//unsigned int count2=0;
 
 
 void alarm() {
@@ -46,15 +44,12 @@ void alarm() {
   while(digitalRead(snoozePin)==HIGH) delay(100);
   digitalWrite(alarmPin, LOW);
 }
->>>>>>> f48941040ca03829351dd7667a867ec574828da2
 
 void setup() {
   pinMode(latchPin,OUTPUT);
   pinMode(clockPin,OUTPUT);
   pinMode(dataPin, OUTPUT);
   pinMode(alarmPin,OUTPUT);
-<<<<<<< HEAD
-=======
   //minute and hour setting things.
   pinMode(minutePin,INPUT_PULLUP);
   pinMode(hourPin,INPUT_PULLUP);
@@ -62,7 +57,6 @@ void setup() {
   pinMode(snoozePin,INPUT_PULLUP);
   //this is attached to the INT pin on the rtc
   attachInterrupt(0,alarm,FALLING);
->>>>>>> f48941040ca03829351dd7667a867ec574828da2
   //for debugging purposes...
   Serial.begin(9600);
   //set clock pin output to 1hz
@@ -84,15 +78,13 @@ void setup() {
   Wire.write(B00100000);
   Wire.write(B00000100);
   Wire.endTransmission();
-<<<<<<< HEAD
   //set alarm to go off at 4:20
   Wire.beginTransmission(0x51);
-  Wire.write(0x09)
-  Wire.write(0x0A)
-  Wire.write(B00100000)
-  Wire.write(B00000010)
+  Wire.write(0x09);
+  Wire.write(0x0A);
+  Wire.write(B00100000);
+  Wire.write(B00000010);
   Wire.endTransmission();
-=======
   //set alarm
   Wire.beginTransmission(0x51);
   Wire.write(0x09);
@@ -144,11 +136,10 @@ void setup() {
   TCCR2B |= (1<<CS22) | (1<<CS21); //set to 256 prescaler
   TIMSK2 |= (1<<OCIE2A);
   interrupts();
->>>>>>> f48941040ca03829351dd7667a867ec574828da2
 }
 
 ISR(TIMER1_COMPA_vect) {
-  count1++;
+  //count1++;
   digitalWrite(latchPin, LOW);
   shiftOut(dataPin, clockPin, MSBFIRST, time_formatted[currentDigit++]);
   if(currentDigit==4)currentDigit=0;
@@ -156,7 +147,7 @@ ISR(TIMER1_COMPA_vect) {
 };
 
 ISR(TIMER2_COMPA_vect, ISR_NOBLOCK) {
-  count2++;
+  //count2++;
   //each byte contains a ready to send code
   //set address to timer registers
   Wire.beginTransmission(0x51);
