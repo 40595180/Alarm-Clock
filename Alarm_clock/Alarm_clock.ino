@@ -9,8 +9,9 @@ int latchPin=8;
 int clockPin=12;
 int dataPin=11;
 int alarmPin=4;
-int minutePin=2;
+int minutePin=3;
 int hourPin=5;
+int snoozePin=6;
 
 //global bytes
 byte time_raw[2]; //raw read from Real Time Clock
@@ -39,7 +40,7 @@ void alarm() {
   Wire.endTransmission();
 
   digitalWrite(alarmPin, HIGH);
-  delay(500);
+  while(digitalRead(snoozePin)==HIGH) delay(100);
   digitalWrite(alarmPin, LOW);
 }
 
@@ -51,6 +52,8 @@ void setup() {
   //minute and hour setting things.
   pinMode(minutePin,INPUT_PULLUP);
   pinMode(hourPin,INPUT_PULLUP);
+  //"snooze" button
+  pinMode(snoozePin,INPUT_PULLUP);
   //this is attached to the INT pin on the rtc
   attachInterrupt(0,alarm,FALLING);
   //for debugging purposes...
@@ -196,8 +199,8 @@ void incrementHour() {
   byte minuteLower= hour & B00001111;
   byte minuteUpper= (hour & B00110000)>>4;
   byte totalMinute= (minuteUpper*10) + minuteLower;
-  totalMinute = (totalMinute + 1)%12;
-  if(totalMinute==0) {totalMinute=12;};
+  totalMinute = (totalMinute + 1)%24;
+  if(totalMinute==0) {totalMinute=24;};
   hour = ((totalMinute/10)<<4)|(totalMinute%10);
   Wire.beginTransmission(0x51);
   Wire.write(0x04);
@@ -206,6 +209,7 @@ void incrementHour() {
 }
 
 void loop() {
-  if(!digitalRead(minutePin)) incrementMinute();
-  if(!digitalRead(hourPin)) incrementHour();
+  if(digitalRead(minutePin)==LOW) incrementMinute();
+  if(digitalRead(hourPin)==LOW) incrementHour();
+  delay(200);
 }
